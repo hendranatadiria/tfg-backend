@@ -1,0 +1,41 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model Device {
+  id       String   @id @default(cuid())
+  name     String
+  location String?
+  TempLogs TemperatureLog[]
+  LevelLogs LevelLog[]
+}
+
+model TemperatureLog {
+  id        String   @default(cuid())
+  deviceId  String
+  device    Device   @relation(fields: [deviceId], references: [id])
+  timestamp DateTime @default(now())
+  value     Float
+
+  @@unique([deviceId, timestamp])
+}
+
+model LevelLog {
+  id        String   @default(cuid())
+  deviceId  String
+  device    Device   @relation(fields: [deviceId], references: [id])
+  timestamp DateTime @default(now())
+  height    Float
+  level     Float
+
+  @@unique([deviceId, timestamp])
+}
