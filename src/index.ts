@@ -4,6 +4,8 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 import { machineIdSync } from 'node-machine-id';
 import { PrismaClient } from '@prisma/client';
+import { indexRouter } from './routers';
+import path from 'path';
 
 console.log("Starting MQTT Backend...")
 
@@ -89,11 +91,11 @@ client.on("message", (topic, message) => {
     if (topic === '/cc-shs/level') {
         console.log(`Level data is: ${msgString}`, typeof msgString);
         const data = JSON.parse(msgString);
-        if (data !== undefined && !Number.isNaN(parseFloat(data.height) && !Number.isNaN(parseFloat(data.level)))) {
+        if (data !== undefined && !Number.isNaN(parseFloat(data.distance) && !Number.isNaN(parseFloat(data.level)))) {
             const timestampData = parseInt(data.epoch)
             db.levelLog.create({
                 data: {
-                    height: parseFloat(data.height),
+                    height: parseFloat(data.distance),
                     level: parseFloat(data.level),
                     device: {
                         connectOrCreate: {
@@ -119,8 +121,19 @@ client.on("message", (topic, message) => {
     }
 });
 
-// const server = app.listen(port, () => {
-//     console.log(`Server is listening on port ${port}`);
-//     }
-// );
+
+// Express Initialization
+app.use(Express.json());
+app.use(Express.urlencoded({ extended: true }));
+app.use(Express.static('public'));
+app.set('views', path.join(__dirname, 'views'));
+
+app.engine('html', require('ejs').renderFile);
+app.set('view-engine', 'html');
+app.use('/', indexRouter);
+
+const server = app.listen(port, () => {
+    console.log(`Server is listening on port ${port}`);
+    }
+);
 
