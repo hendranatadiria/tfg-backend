@@ -10,7 +10,7 @@ import path from 'path';
 console.log("Starting MQTT Backend...")
 
 const app = Express();
-const port = 3000;
+const port = 3636;
 
 console.log("Reading configuration...")
 if (process.env.MQTT_HOST === undefined || process.env.MQTT_PORT === undefined || process.env.MQTT_USER === undefined || process.env.MQTT_PASS === undefined) {
@@ -132,7 +132,7 @@ app.engine('html', require('ejs').renderFile);
 app.set('view-engine', 'html');
 app.use('/', indexRouter);
 
-const server = app.listen(port, () => {
+const server = app.listen(process.env.PORT || port, () => {
     console.log(`Server is listening on port ${port}`);
     }
 );
