@@ -112,6 +112,45 @@ client.on("message", (topic, message) => {
                 }
             }).then((result) => {
                 console.log(`Liquid Level log created: ${JSON.stringify(result)}`);
+                db.levelLog.findFirst({
+                    where: {
+                        AND: [
+                            {
+                                deviceId: result.deviceId
+                            },
+                            {
+                                timestamp: {
+                                    lt: result.timestamp
+                                }
+                            },
+                        ]
+                    },
+                    orderBy: {
+                        timestamp: 'desc'
+                    },
+                }).then((prevData) => {
+                    if (prevData === null) return;
+
+                    // if the level difference is > 20 or the time difference is > 30 mins (10x time measurement sequence), then it is a new T0 (either refilled or start over)
+                    if (result.level - prevData.level > 20 || result.timestamp.valueOf() - prevData.timestamp.valueOf() >= 1000*60*30) {
+                        db.levelLog.update({
+                            where: {
+                                deviceId_timestamp: {
+                                    deviceId: result.deviceId,
+                                    timestamp: result.timestamp
+                                }
+                            },
+                            data: {
+                                isT0: true
+                            }
+                        }).then((result) => {
+                            console.log(`Liquid Level log updated (is new T0/refiled): ${JSON.stringify(result)}`);
+                        }).catch((error) => {
+                            console.log(`Error updating liquid level log: ${JSON.stringify(error)}`);
+                        });
+                    }
+                })
+
             }).catch((error) => {
                 console.log(`Error creating liquid level log: ${JSON.stringify(error)}`);
             });
