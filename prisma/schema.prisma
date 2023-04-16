@@ -31,11 +31,13 @@ model TemperatureLog {
 
 model LevelLog {
   id        String   @default(cuid())
+  idSerial  Int      @default(autoincrement())
   deviceId  String
   device    Device   @relation(fields: [deviceId], references: [id])
   timestamp DateTime @default(now())
   height    Float
   level     Float
+  isT0      Boolean  @default(false)
 
   @@unique([deviceId, timestamp])
 }
