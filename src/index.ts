@@ -127,6 +127,11 @@ client.on("message", (topic, message) => {
                                 timestamp: {
                                     not: result.timestamp
                                 }
+                            },
+                            {
+                                level: {
+                                    gt: 0
+                                }
                             }
                         ]
                     },
