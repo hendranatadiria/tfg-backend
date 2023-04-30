@@ -123,6 +123,11 @@ client.on("message", (topic, message) => {
                                     lt: result.timestamp
                                 }
                             },
+                            {
+                                timestamp: {
+                                    not: result.timestamp
+                                }
+                            }
                         ]
                     },
                     orderBy: {
@@ -132,7 +137,10 @@ client.on("message", (topic, message) => {
                     if (prevData === null) return;
 
                     // if the level difference is > 20 or the time difference is > 30 mins (10x time measurement sequence), then it is a new T0 (either refilled or start over)
-                    if (result.level - prevData.level > 20 || result.timestamp.valueOf() - prevData.timestamp.valueOf() >= 1000*60*30) {
+                    if (result.level - prevData.level > 20 || Math.abs(result.timestamp.getTime() - prevData.timestamp.getTime()) >= 1800000 ) {
+                        console.log("New T0 detected, updating previous data")
+                        console.log("Current data: ", result);
+                        console.log("Previous data: ", prevData);
                         db.levelLog.update({
                             where: {
                                 deviceId_timestamp: {
