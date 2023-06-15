@@ -6,6 +6,12 @@ import { machineIdSync } from 'node-machine-id';
 import { PrismaClient } from '@prisma/client';
 import { indexRouter } from './routers';
 import path from 'path';
+import 'dotenv/config'
+import { periodicLogCleanup } from './controllers/periodicLogCleanup';
+import { initializeApp } from 'firebase-admin/app';
+import { credential } from 'firebase-admin';
+import { exit } from 'process';
+import { CronJob } from 'cron';
 
 console.log("Starting MQTT Backend...")
 
@@ -82,6 +88,7 @@ client.on("message", (topic, message) => {
             }).then((result) => {
                 console.log(`Temperature log created: ${JSON.stringify(result)}`);
             }).catch((error) => {
+                console.log(error);
                 console.log(`Error creating temperature log: ${JSON.stringify(error)}`);
             });
         } else {
@@ -165,6 +172,7 @@ client.on("message", (topic, message) => {
                 })
 
             }).catch((error) => {
+                console.log(error);
                 console.log(`Error creating liquid level log: ${JSON.stringify(error)}`);
             });
         } else {
@@ -172,6 +180,21 @@ client.on("message", (topic, message) => {
         }
     }
 });
+
+// Firebase initialization
+console.log('Initializing Firebase...');
+const saPath = process.env.FIREBASE_SA_PATH
+const storageBucket = process.env.FIREBASE_STORAGE_BUCKET
+if (saPath === undefined) {
+    console.error("⚠️⚠️⚠️ Firebase Service Account Path doesn't exist. Please set it in env's 'FIREBASE_SA_PATH' before running the app. Exiting...")
+    exit(99);
+}
+if (storageBucket === undefined) {
+    console.error("⚠️⚠️⚠️ Firebase Storage Bucket Name doesn't exist. Please set it in env's 'FIREBASE_STORAGE_BUCKET' before running the app. Exiting...")
+    exit(99);
+}
+initializeApp({credential: credential.cert(saPath)});
+console.log("Firebase Initialized!");
 
 
 // Express Initialization
@@ -188,4 +211,13 @@ const server = app.listen(process.env.PORT || port, () => {
     console.log(`Server is listening on port ${port}`);
     }
 );
+
+// '* * * * *', <- this will be run every minute. below will run for every beginning of month (12:00am)
+const cron = new CronJob(
+    '0 0 1 * *',
+    periodicLogCleanup,
+    () => {console.log("Cron finished running.")},
+    true,
+    'Asia/Jakarta',
+)
 

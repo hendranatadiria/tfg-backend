@@ -41,3 +41,18 @@ model LevelLog {
 
   @@unique([deviceId, timestamp])
 }
+
+model RegressionHistory {
+  id        String   @default(cuid()) @unique // a device with certain t0 & tmax can have multiple value regression, hence the @unique on id instead of other fields.
+  levelLogId String
+  deviceId  String
+  t0        DateTime
+  tmax      DateTime
+
+  value     Float
+  tOnValue  DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+}
